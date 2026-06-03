@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>灵感食光 · 随机一人食食谱</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f9e7d2 0%, #f5cba0 100%);
+            font-family: system-ui, 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            min-height: 100vh;
+            padding: 20px 16px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 主卡片容器 */
+        .recipe-card {
+            max-width: 550px;
+            width: 100%;
+            margin: 0 auto;
+            background: #fffef7;
+            border-radius: 64px 48px 72px 56px;
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255,215,150,0.6);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            transition: all 0.3s ease;
+        }
+
+        /* 装饰头部 */
+        .hero {
+            background: #fe9800;
+            background-image: radial-gradient(circle at 10% 30%, #ffb347, #e56700);
+            padding: 32px 24px 28px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            letter-spacing: 2px;
+            font-weight: 800;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            opacity: 0.95;
+            margin-top: 12px;
+            font-weight: 500;
+        }
+
+        .random-badge {
+            background: #ffdd99;
+            color: #b45f06;
+            border-radius: 60px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-top: 14px;
+            backdrop-filter: blur(2px);
+        }
+
+        /* 主要内容区 */
+        .content {
+            padding: 28px 26px 34px;
+        }
+
+        /* 今日主角 */
+        .dish-header {
+            text-align: center;
+            margin-bottom: 28px;
+            border-bottom: 3px dashed #ffce9e;
+            padding-bottom: 18px;
+        }
+
+        .dish-name {
+            font-size: 2.4rem;
+            font-weight: 800;
+            color: #c44b00;
+            background: #fff1e0;
+            display: inline-block;
+            padding: 6px 24px;
+            border-radius: 80px;
+            letter-spacing: 2px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        .dish-tag {
+            margin-top: 12px;
+            font-size: 0.9rem;
+            color: #bc7a3c;
+            background: #faeedf;
+            display: inline-block;
+            padding: 4px 18px;
+            border-radius: 60px;
+        }
+
+        /* 食材 + 步骤区块 */
+        .section {
+            background: #fef7e9;
+            border-radius: 48px;
+            padding: 18px 22px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.05);
+            transition: 0.1s;
+        }
+
+        .section-title {
+            font-size: 1.45rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 7px solid #fe9800;
+            padding-left: 18px;
+            margin-bottom: 18px;
+            color: #4a2a0e;
+        }
+
+        .ingredient-list {
+            list-style: none;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .ingredient-list li {
+            background: white;
+            border-radius: 48px;
+            padding: 8px 20px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #59341a;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: step-counter;
+        }
+
+        .step-list li {
+            counter-increment: step-counter;
+            margin-bottom: 18px;
+            font-size: 1rem;
+            line-height: 1.45;
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            color: #3c2a1f;
+        }
+
+        .step-list li::before {
+            content: counter(step-counter);
+            background: #fe9800;
+            color: white;
+            font-weight: bold;
+            width: 28px;
+            height: 28px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
+
+        /* 随机按钮 */
+        .random-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #ffa32e;
+            width: 100%;
+            border: none;
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 16px 10px;
+            border-radius: 60px;
+            color: #2c1a0a;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            transition: 0.1s linear;
+            cursor: pointer;
+            box-shadow: 0 7px 0 #b45f1b;
+            font-family: inherit;
+        }
+
+        .random-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #b45f1b;
+        }
+
+        .footer-note {
+            text-align: center;
+            font-size: 0.75rem;
+            color: #b87a43;
+            margin-top: 20px;
+        }
+
+        /* 动画闪卡效果 */
+        @keyframes gentlePop {
+            0% { transform: scale(0.97); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .content-update {
+            animation: gentlePop 0.25s ease-out;
+        }
+
+        @media (max-width: 500px) {
+            .dish-name { font-size: 1.8rem; }
+            .section-title { font-size: 1.25rem; }
+            .content { padding: 20px 18px; }
+            .ingredient-list li { padding: 5px 16px; font-size: 0.9rem; }
+        }
+
+        .emoji-food {
+            font-size: 2rem;
+            filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.2));
+        }
+    </style>
+</head>
+<body>
+
+<div class="recipe-card" id="appRoot">
+    <div class="hero">
+        <h1>
+            <span>🍳</span> 一人食·灵感签 <span>🥢</span>
+        </h1>
+        <p>替你决定今天吃什么 · 附详细教程</p>
+        <div class="random-badge">✨ 随机翻牌 治愈选择困难 ✨</div>
+    </div>
+    <div class="content" id="dynamicContent">
+        <!-- 动态菜品数据会由js渲染 -->
+        <div style="text-align:center; padding:30px;">🥘 加载美味食谱中...</div>
+    </div>
+    <div style="padding: 0 26px 32px 26px;">
+        <button class="random-btn" id="shuffleRecipeBtn">
+            🎲 换一道菜 🎲
+        </button>
+        <div class="footer-note">
+            🌟 一人食不将就 · 每道菜都是温柔犒赏
+        </div>
+    </div>
+</div>
+
+<script>
+    // ---------- 🌮 美食食谱库 (随机一人食 12道精致&家常) ----------
+    const RECIPES = [
+        {
+            name: "🏮 日式肥牛饭",
+            tag: "⭐ 15分钟 | 浓郁治愈",
+            ingredients: ["肥牛卷150g", "洋葱半颗", "生抽2勺", "味淋1勺", "老抽半勺", "白糖1小勺", "米饭1碗", "无菌蛋黄1个", "葱花少许"],
+            steps: [
+                "洋葱切丝，肥牛卷用热水焯烫变色捞出。",
+                "酱汁：生抽+味淋+老抽+白糖+3勺水搅匀。",
+                "锅中少油炒软洋葱丝，倒入酱汁煮开。",
+                "加入肥牛翻炒均匀，汤汁微收关火。",
+                "盖在热米饭上，中间放无菌蛋黄，撒葱花。戳破蛋黄拌饭巨香！"
+            ]
+        },
+        {
+            name: "🍝 蒜香虾仁意面",
+            tag: "⚡ 20分钟 | 西式经典",
+            ingredients: ["意面80g", "虾仁100g", "大蒜6瓣", "干辣椒2个", "欧芹碎", "橄榄油", "盐黑胡椒", "柠檬汁几滴"],
+            steps: [
+                "意面按包装煮硬一点，留半碗面汤。",
+                "虾仁用盐、黑胡椒腌5分钟，蒜切片。",
+                "橄榄油小火煸蒜片至金黄，加干辣椒和虾仁炒熟。",
+                "倒入煮好的意面，加几勺面汤，大火翻炒。",
+                "撒欧芹碎、黑胡椒，挤几滴柠檬汁，拌匀出锅。"
+            ]
+        },
+        {
+            name: "🥘 韩式泡菜豆腐汤",
+            tag: "🔥 15分钟 | 韩剧同款",
+            ingredients: ["嫩豆腐1块", "韩式泡菜80g", "五花肉片50g", "大葱半根", "蒜末1勺", "韩式辣酱1勺", "辣椒粉半勺", "淘米水300ml"],
+            steps: [
+                "五花肉煸出油，加葱段、蒜末、泡菜炒香。",
+                "加辣椒粉、辣酱翻炒，倒入淘米水或清水。",
+                "煮开后放入嫩豆腐，轻轻挖成大块。",
+                "中火煮5分钟，尝味可加少许盐糖。",
+                "撒葱花，配米饭绝了！"
+            ]
+        },
+        {
+            name: "🍛 鸡肉咖喱饭",
+            tag: "🍛 浓郁香料 | 零失败",
+            ingredients: ["鸡腿肉200g", "土豆1个", "胡萝卜半根", "洋葱半个", "咖喱块2块", "椰浆50ml", "米饭1碗", "黑芝麻"],
+            steps: [
+                "鸡肉切块，洋葱土豆胡萝卜切丁。",
+                "锅热油炒香洋葱，加入鸡肉炒白。",
+                "下土豆胡萝卜翻炒，加水没过食材煮10分钟。",
+                "关火加入咖喱块融化，再开火煮5分钟至浓稠。",
+                "淋椰浆搅匀，浇在米饭上，撒黑芝麻。"
+            ]
+        },
+        {
+            name: "🍜 牛油果拌荞麦面",
+            tag: "🥑 清爽低卡 | 5分钟",
+            ingredients: ["荞麦面60g", "牛油果半个", "小番茄5颗", "生抽2勺", "香油1勺", "柠檬汁", "芝麻海苔碎"],
+            steps: [
+                "荞麦面煮熟过冰水沥干。",
+                "牛油果挖出压泥，小番茄对半切。",
+                "酱汁: 生抽+香油+柠檬汁+少许纯净水搅匀。",
+                "面条+牛油果泥+番茄+酱汁抓拌均匀。",
+                "撒芝麻海苔碎，清清爽爽超开胃。"
+            ]
+        },
+        {
+            name: "🥟 抱蛋煎饺",
+            tag: "🍳 懒人幸福 | 平底锅搞定",
+            ingredients: ["速冻饺子8个", "鸡蛋2个", "葱花", "黑芝麻", "油1勺", "清水半碗"],
+            steps: [
+                "平底锅少油摆好饺子（无需解冻），中火煎到底部金黄。",
+                "倒入半碗清水，盖盖子焖3分钟至水分收干。",
+                "鸡蛋加盐打散，沿锅边淋入蛋液。",
+                "小火煎到蛋液凝固，撒葱花黑芝麻。",
+                "倒扣盘子翻面出锅，蘸醋吃超满足。"
+            ]
+        },
+        {
+            name: "🥩 黑椒牛仔骨饭",
+            tag: "🥩 星级简餐 | 浓郁黑椒",
+            ingredients: ["牛仔骨200g", "洋葱半个", "黑胡椒酱2勺", "黄油10g", "蒜瓣3粒", "米饭", "青红椒少许"],
+            steps: [
+                "牛仔骨剪小块，用黑胡椒、盐腌制10分钟。",
+                "锅中黄油融化，中火煎牛仔骨两面焦黄盛出。",
+                "蒜片洋葱炒香，加黑椒酱和少许水煮开。",
+                "倒入牛仔骨和青红椒快速翻炒挂汁。",
+                "盖在米饭上，黑椒香气扑鼻。"
+            ]
+        },
+        {
+            name: "🥣 番茄鸡蛋疙瘩汤",
+            tag: "🍅 暖心暖胃 | 一人食治愈",
+            ingredients: ["番茄2个", "鸡蛋2个", "面粉60g", "葱花", "番茄酱1勺", "盐", "香油"],
+            steps: [
+                "面粉边加水边搅拌成小面疙瘩。",
+                "番茄去皮切块，鸡蛋打散。",
+                "锅中炒番茄出沙，加番茄酱和清水煮开。",
+                "撒入面疙瘩煮2分钟，淋入蛋液成蛋花。",
+                "加盐、葱花、香油，一口回到小时候。"
+            ]
+        },
+        {
+            name: "🌮 墨西哥塔可",
+            tag: "🌽 风味狂欢 | 低脂新颖",
+            ingredients: ["玉米饼2张", "鸡胸肉100g", "生菜丝", "莎莎酱", "牛油果酱", "酸奶油", "青柠"],
+            steps: [
+                "鸡胸肉用辣椒粉、孜然、盐煎熟切条。",
+                "玉米饼稍加热变软。",
+                "铺生菜丝、鸡肉条，挤莎莎酱和牛油果酱。",
+                "淋酸奶油，挤青柠汁，对折开吃！",
+                "一口感受墨西哥街头氛围。"
+            ]
+        },
+        {
+            name: "🍲 鲜虾砂锅粥",
+            tag: "🦐 潮汕风味 | 熬出鲜甜",
+            ingredients: ["大米80g", "鲜虾6只", "干贝10粒", "香菇3朵", "姜丝", "芹菜粒", "白胡椒粉"],
+            steps: [
+                "大米提前泡30分钟，砂锅加水煮粥底。",
+                "虾头炒出虾油，干贝泡开撕碎。",
+                "粥底浓稠后加入干贝、香菇片、姜丝。",
+                "放虾仁煮2分钟，加盐、白胡椒粉。",
+                "关火撒芹菜粒，鲜掉眉毛！"
+            ]
+        },
+        {
+            name: "🍝 肉酱芝士焗意面",
+            tag: "🧀 拉丝快乐 | 烤箱平替",
+            ingredients: ["意面80g", "肉末80g", "番茄意面酱3勺", "马苏里拉芝士", "洋葱丁", "帕玛森芝士粉"],
+            steps: [
+                "意面煮好沥干。",
+                "炒香洋葱，加肉末炒白，倒意面酱炒匀。",
+                "肉酱与意面混合，装烤碗或平底锅。",
+                "铺满马苏里拉芝士，盖盖子小火焖至芝士融化。",
+                "撒芝士粉，香浓拉丝停不下来。"
+            ]
+        },
+        {
+            name: "🍱 泡菜金枪鱼饭团",
+            tag: "🍙 无需开火 | 野餐便当",
+            ingredients: ["米饭1碗", "金枪鱼罐头半罐", "泡菜碎40g", "蛋黄酱2勺", "海苔片", "芝麻"],
+            steps: [
+                "金枪鱼沥油压碎，泡菜切碎。",
+                "混合金枪鱼+泡菜+蛋黄酱+少许芝麻。",
+                "米饭微热，包入馅料捏成三角饭团。",
+                "裹上海苔片，刷一点点酱油更香。",
+                "超快手又风味十足！"
+            ]
+        }
+    ];
+
+    // DOM 元素
+    const contentDiv = document.getElementById('dynamicContent');
+    const shuffleBtn = document.getElementById('shuffleRecipeBtn');
+
+    // 上一次索引，避免连续完全一样 (但允许偶尔重复也无伤大雅，概率较小)
+    let lastIndex = -1;
+
+    // 随机获取食谱 (不完全相同)
+    function getRandomRecipe() {
+        let newIndex = Math.floor(Math.random() * RECIPES.length);
+        // 如果食谱数量大于1，尽量避免连续两次相同（增加惊喜感）
+        if (RECIPES.length > 1 && newIndex === lastIndex) {
+            newIndex = (newIndex + 1) % RECIPES.length;
+        }
+        lastIndex = newIndex;
+        return { ...RECIPES[newIndex] }; // 浅拷贝足够
+    }
+
+    // 渲染当前食谱到界面 (带动画刷新)
+    function renderRecipe(recipe) {
+        if (!recipe) return;
+        // 构造食材列表html
+        const ingredientsHtml = recipe.ingredients.map(ing => `<li>🍴 ${ing}</li>`).join('');
+        // 构造步骤列表html
+        const stepsHtml = recipe.steps.map(step => `<li>${step}</li>`).join('');
+        
+        const fullHtml = `
+            <div class="dish-header">
+                <div class="dish-name">${recipe.name}</div>
+                <div class="dish-tag">${recipe.tag}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">
+                    <span>🥬</span> 食材准备
+                </div>
+                <ul class="ingredient-list">
+                    ${ingredientsHtml}
+                </ul>
+            </div>
+            <div class="section">
+                <div class="section-title">
+                    <span>👩‍🍳</span> 制作方法
+                </div>
+                <ul class="step-list">
+                    ${stepsHtml}
+                </ul>
+            </div>
+            <div style="text-align: center; margin-top: 8px;">
+                <span style="background:#ffefd6; border-radius:40px; padding:5px 18px; font-size:0.75rem;">🧂 一人份刚刚好 · 调味可随心意</span>
+            </div>
+        `;
+        
+        // 应用动画过渡（通过class改变）
+        if (contentDiv) {
+            // 移除之前的动画类，重加触发
+            contentDiv.classList.remove('content-update');
+            // 强制重绘小技巧
+            void contentDiv.offsetWidth;
+            contentDiv.innerHTML = fullHtml;
+            contentDiv.classList.add('content-update');
+        }
+    }
+
+    // 刷新页面: 随机抽选并展示
+    function refreshRandomRecipe() {
+        const newRecipe = getRandomRecipe();
+        renderRecipe(newRecipe);
+    }
+
+    // 初始化首次随机加载
+    function init() {
+        // 随机挑选第一道菜(非强制避免重复)
+        const firstRecipe = RECIPES[Math.floor(Math.random() * RECIPES.length)];
+        lastIndex = RECIPES.findIndex(r => r.name === firstRecipe.name);
+        renderRecipe(firstRecipe);
+        // 按钮事件绑定
+        if (shuffleBtn) {
+            shuffleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                refreshRandomRecipe();
+                // 触感（可选，部分浏览器支持振动？不强制，但增加微反馈）
+                try {
+                    if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(20);
+                } catch(e) { /* 静默 */ }
+            });
+            // 手机触摸防止误判导致重复触发
+            shuffleBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                refreshRandomRecipe();
+                try { if (window.navigator && window.navigator.vibrate) window.navigator.vibrate(20); } catch(e) {}
+            }, { passive: false });
+        }
+    }
+
+    // 启动一切
+    init();
+</script>
+</body>
+</html>
