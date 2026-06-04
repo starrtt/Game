@@ -1,0 +1,652 @@
+以下是您需要的像素风虚拟植物网页的代码。它实现了带阶段成长和每日浇水限制的功能。
+```html
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>像素植物伙伴 - 虚拟盆栽</title>
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a472a 0%, #0e2a1a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', 'VT323', monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* 像素风主容器 */
+        .pixel-container {
+            background-color: #2b2b1f;
+            padding: 20px 20px 25px;
+            border-radius: 12px;
+            box-shadow: 8px 8px 0 #1a1a0f, 12px 12px 20px rgba(0,0,0,0.5);
+            border-bottom: 3px solid #5a4a2e;
+            border-right: 3px solid #5a4a2e;
+        }
+
+        .game-card {
+            background: #8bac5e;
+            background-image: linear-gradient(45deg, #7c9c4e 2%, #9bbf6e 98%);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: inset 0 0 0 2px #c8e0a0, 0 0 0 3px #4a3e28;
+            text-align: center;
+            max-width: 500px;
+            min-width: 280px;
+        }
+
+        /* 像素艺术区域 */
+        .pixel-art-area {
+            background: #5f8745;
+            background-image: radial-gradient(circle at 10px 20px, #6f9e50 1px, transparent 1px);
+            background-size: 16px 16px;
+            border-radius: 30px;
+            padding: 20px 15px;
+            margin-bottom: 20px;
+            border: 4px solid #2e3b1f;
+            box-shadow: inset 0 0 0 3px #b8d28a, 0 6px 0 #3a2a18;
+        }
+
+        .plant-canvas {
+            display: block;
+            margin: 0 auto;
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            image-rendering: pixelated;
+            background-color: #4c7236;
+            border-radius: 12px;
+            box-shadow: 0 4px 0 #2c4620;
+            cursor: pointer;
+        }
+
+        /* 状态栏像素风格 */
+        .status-panel {
+            background: #2f2a1f;
+            padding: 12px;
+            border-radius: 16px;
+            margin: 15px 0;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 2px solid #6a5c3c;
+            box-shadow: inset 0 0 0 1px #cbbf8b, 0 3px 0 #1f1b10;
+        }
+
+        .status-item {
+            background: #1e1b12;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: #b3ff9b;
+            text-shadow: 0 0 2px #00aa33;
+            font-weight: bold;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #6d8f4a;
+        }
+
+        .status-label {
+            font-size: 0.75rem;
+            color: #ffec9e;
+            margin-right: 6px;
+        }
+
+        /* 像素按钮 */
+        .pixel-btn {
+            background: #4b6e2c;
+            border: none;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.4rem;
+            padding: 10px 20px;
+            margin: 8px 6px;
+            color: #f9f2cf;
+            text-shadow: 2px 2px 0 #1f3a0e;
+            cursor: pointer;
+            box-shadow: 3px 3px 0 #1e2a0e;
+            transition: 0.05s linear;
+            border-radius: 20px;
+            letter-spacing: 2px;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 1px 1px 0 #1e2a0e;
+        }
+
+        .pixel-btn:disabled {
+            opacity: 0.5;
+            transform: none;
+            cursor: not-allowed;
+            filter: grayscale(0.2);
+        }
+
+        .reset-btn {
+            background: #7a4c2c;
+            box-shadow: 3px 3px 0 #4a2a14;
+            color: #ffe5b4;
+        }
+
+        .water-icon {
+            display: inline-block;
+            font-size: 1.4rem;
+            filter: drop-shadow(0 2px 0 #0f3f0f);
+        }
+
+        .message-area {
+            background: #211f16;
+            margin-top: 16px;
+            padding: 10px;
+            border-radius: 20px;
+            color: #e3f2b0;
+            font-size: 0.9rem;
+            font-family: monospace;
+            border-left: 8px solid #96c280;
+            text-align: left;
+            word-break: break-word;
+        }
+
+        .footer-pixel {
+            font-size: 0.7rem;
+            text-align: center;
+            margin-top: 15px;
+            color: #3b4628;
+            background: #e1dbaa;
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(0, 0); }
+            25% { transform: translate(1px, -1px); }
+            50% { transform: translate(-1px, 1px); }
+            75% { transform: translate(1px, 1px); }
+            100% { transform: translate(0, 0); }
+        }
+        
+        .animate-water {
+            animation: shake 0.2s ease-in-out 0s 2;
+        }
+    </style>
+</head>
+<body>
+<div class="pixel-container">
+    <div class="game-card">
+        <div class="pixel-art-area">
+            <canvas id="plantCanvas" width="220" height="220" class="plant-canvas" style="width:220px; height:220px; image-rendering: crisp-edges; image-rendering: pixelated;"></canvas>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-item"><span class="status-label">🌱 阶段</span> <span id="stageName">种子</span></div>
+            <div class="status-item"><span class="status-label">💧 今日已浇</span> <span id="waterToday">0</span> / <span id="dailyLimitDisplay">1</span></div>
+            <div class="status-item"><span class="status-label">📅 连续守护</span> <span id="streakCount">0</span> 天</div>
+        </div>
+
+        <div>
+            <button id="waterBtn" class="pixel-btn">💧 浇 水 💧</button>
+            <button id="resetBtn" class="pixel-btn reset-btn">🔄 重 生</button>
+        </div>
+
+        <div id="messageBox" class="message-area">
+            ✨ 点击💧浇水，每天限1次～<br>
+            植物会慢慢长大，别忘记每日照顾！
+        </div>
+        <div class="footer-pixel">
+            🕹️ PIXEL PAL · 每日灌溉
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ----- 像素植物成长阶段 (5阶段 + 额外最终开花结果)
+        const STAGES = [
+            { name: "🌰 种子",   emojiHint: "⚫",  nextWaterNeeded: 1,    draw: drawSeedPixel },
+            { name: "🌱 嫩芽",   emojiHint: "🌱",  nextWaterNeeded: 2,    draw: drawSproutPixel },
+            { name: "🍃 幼苗",   emojiHint: "🍃",  nextWaterNeeded: 3,    draw: drawSeedlingPixel },
+            { name: "🌿 茂盛叶", emojiHint: "🌿",  nextWaterNeeded: 4,    draw: drawLeafyPixel },
+            { name: "🌸 花苞",   emojiHint: "🌸",  nextWaterNeeded: 5,    draw: drawBudPixel },
+            { name: "🌟 开花结果", emojiHint: "🌟",nextWaterNeeded: 0,    draw: drawBloomPixel }   // 最终形态不再需要成长
+        ];
+        
+        const MAX_STAGE_INDEX = STAGES.length - 1; // 5
+        
+        // 存储数据
+        let currentStage = 0;           // 索引0~5
+        let waterProgress = 0;           // 当前阶段已浇水次数（到达nextWaterNeeded后晋级）
+        let lastWaterDateStr = "";        // 上次浇水日期 YYYY-MM-DD
+        let totalStreak = 0;              // 连续照顾天数（每天只要浇过水就+1，断掉归零）
+        let todayWatered = false;          // 今天是否已经浇过水 (基于日期判断)
+        
+        // DOM 元素
+        const canvas = document.getElementById('plantCanvas');
+        const ctx = canvas.getContext('2d');
+        const stageNameSpan = document.getElementById('stageName');
+        const waterTodaySpan = document.getElementById('waterToday');
+        const dailyLimitDisplaySpan = document.getElementById('dailyLimitDisplay');
+        const streakCountSpan = document.getElementById('streakCount');
+        const waterBtn = document.getElementById('waterBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const messageBox = document.getElementById('messageBox');
+        
+        // 辅助: 获取今日日期字符串 YYYY-MM-DD
+        function getTodayStr() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // 检查并更新每日状态 (基于上次浇水日期重置 todayWatered)
+        function updateDailyStatus() {
+            const today = getTodayStr();
+            if (lastWaterDateStr === today) {
+                todayWatered = true;
+            } else {
+                todayWatered = false;
+                // 如果上次浇水不是昨天，处理连续断签逻辑（在浇水时处理更精确，但先做展示修正）
+            }
+            // 连续显示: 如果今天还没浇水，但上一次浇水日期不是昨天，连续的逻辑其实是在浇水时更新
+            // 另外在加载时计算连续是否需要重置（如果用户超过一天没浇水，连续清0，在浇水前我们可预先调整显示）
+            // 实际连续天数要靠浇水时的日期连续性，所以此处只是显示纠正
+            if(lastWaterDateStr && !isConsecutive(lastWaterDateStr, today)) {
+                // 如果上次浇水日期不是昨天而且不是今天，且用户还没有在今天浇水，连续应该已经中断（但若今天还没浇水，显示旧的但逻辑在浇水时覆盖）
+                // 避免显示错误：在刷新页面时如果今天没浇+上次浇水是前天，连续应是0，但totalStreak保留旧值会误导。因此需要判定中断
+                if(lastWaterDateStr !== today && !isYesterday(lastWaterDateStr, today) && lastWaterDateStr !== "") {
+                    // 连续中断了，但totalStreak应该重置? 为了数据正确，只有当用户浇水时才更新，但不希望显示假的连续。因此重置显示前检查
+                    // 注意如果上次登录没断，但是日期差了超过一天，应当显示0天(还未重新连续)
+                    if(!todayWatered && !isYesterday(lastWaterDateStr, today)){
+                        // 显示连续为0, 但实际totalStreak未变, 等到浇水时会重新计算。为了避免误解，显示0
+                        streakCountSpan.innerText = "0";
+                    } else {
+                        streakCountSpan.innerText = totalStreak;
+                    }
+                } else {
+                    streakCountSpan.innerText = totalStreak;
+                }
+            } else {
+                streakCountSpan.innerText = totalStreak;
+            }
+            
+            // 更新界面今日已浇显示
+            waterTodaySpan.innerText = todayWatered ? "1" : "0";
+        }
+        
+        function isYesterday(lastDate, todayDate) {
+            if(!lastDate) return false;
+            const last = new Date(lastDate);
+            const today = new Date(todayDate);
+            last.setHours(0,0,0,0);
+            today.setHours(0,0,0,0);
+            const diffTime = today - last;
+            const diffDays = diffTime / (1000*60*60*24);
+            return diffDays === 1;
+        }
+        
+        function isConsecutive(lastDate, todayDate) {
+            if(!lastDate) return false;
+            if(lastDate === todayDate) return true;
+            return isYesterday(lastDate, todayDate);
+        }
+        
+        // 保存数据到 localStorage
+        function saveGameData() {
+            const save = {
+                currentStage: currentStage,
+                waterProgress: waterProgress,
+                lastWaterDateStr: lastWaterDateStr,
+                totalStreak: totalStreak,
+                todayWatered: todayWatered
+            };
+            localStorage.setItem('pixelPlantSave', JSON.stringify(save));
+        }
+        
+        // 加载数据
+        function loadGameData() {
+            const raw = localStorage.getItem('pixelPlantSave');
+            if(!raw) return false;
+            try {
+                const data = JSON.parse(raw);
+                currentStage = (data.currentStage !== undefined) ? Math.min(MAX_STAGE_INDEX, Math.max(0, data.currentStage)) : 0;
+                waterProgress = data.waterProgress || 0;
+                lastWaterDateStr = data.lastWaterDateStr || "";
+                totalStreak = data.totalStreak || 0;
+                todayWatered = data.todayWatered || false;
+                
+                // 修复日期逻辑: 如果上次存储的todayWatered与当前日期不符，应当重置todayWatered，同时可能修正连续
+                const today = getTodayStr();
+                if(lastWaterDateStr !== today) {
+                    if(todayWatered === true && lastWaterDateStr !== today) {
+                        // 不一致，纠正
+                        todayWatered = false;
+                    }
+                } else {
+                    if(lastWaterDateStr === today && !todayWatered && data.todayWatered===true){
+                        todayWatered = true;
+                    }
+                }
+                // 额外的连续性修复: 如果上次浇水日期不是昨天也不是今天，那连续天数其实需要置0? 不对，因为用户没浇水，连续应该在下次浇水时被覆写，但显示会错误，所以若今天没浇水且上次浇水日期与今日间隔>1，建议显示时处理。但不改动totalStreak值，允许下次浇水重置。
+                // 但为了玩家不误解，这里在界面刷新的时候矫正显示: 如果连续断裂，但又没浇水重置totalStreak会在浇水时设定。这里单独设定显示只影响视觉
+                // 我们不做粗暴修改，但可选确保展示正确
+                if(lastWaterDateStr && !isConsecutive(lastWaterDateStr, today) && lastWaterDateStr !== today && !todayWatered){
+                    // 此时连续断裂，显示暂时为0
+                    // 不修改存储的值，等到浇水时会重新计算连续
+                    // 为了不错误显示，单独在更新界面时动态改变
+                }
+                return true;
+            } catch(e) { console.warn(e); return false; }
+        }
+        
+        // 成长判定: 增加浇水, 由外部调用
+        function addWater() {
+            const today = getTodayStr();
+            
+            // 每日限制检查
+            if(todayWatered) {
+                showMessage("🌧️ 今天已经浇过水啦！明天再来吧～", 1800);
+                return false;
+            }
+            
+            // 当前阶段是否为最终形态且已满级？
+            if(currentStage === MAX_STAGE_INDEX) {
+                showMessage("🌸 已经开花结果啦！完美绽放，明天还是可以继续浇水陪伴～", 1800);
+                // 但最终形态也可以浇水？每日限制还是生效，但不会成长，仅为了陪伴和维持连续
+                // 设计成允许浇水，保持连续，但效果只加连续和重置今日浇水标记，不成长
+                // 同时也更新记录
+                applyWaterEffect(today);
+                return true;
+            }
+            
+            // 普通阶段增加进度
+            const need = STAGES[currentStage].nextWaterNeeded;
+            let newProgress = waterProgress + 1;
+            let grewUp = false;
+            
+            if(newProgress >= need) {
+                // 晋级
+                if(currentStage+1 <= MAX_STAGE_INDEX) {
+                    currentStage++;
+                    waterProgress = 0;
+                    grewUp = true;
+                    showMessage(`✨ 哇！植物成长到了 ${STAGES[currentStage].name} ✨`, 2000);
+                } else {
+                    // 最大了，设置progress锁定
+                    waterProgress = need; // 保持最大
+                    grewUp = false;
+                }
+            } else {
+                waterProgress = newProgress;
+                showMessage(`💦 咕嘟咕嘟~ 还需要 ${need - waterProgress} 次浇水进入下一阶段！`, 1800);
+            }
+            
+            applyWaterEffect(today);
+            if(grewUp && currentStage === MAX_STAGE_INDEX) {
+                showMessage("🎉 太棒啦！植物结出果实，完全成熟！每天浇水它会一直陪伴你~ 🎉", 2500);
+            }
+            return true;
+        }
+        
+        // 执行浇水后的数据更新（连续天数、日期、今日标记）
+        function applyWaterEffect(today) {
+            // 处理连续签到逻辑
+            if(lastWaterDateStr === "") {
+                totalStreak = 1;
+            } else if(lastWaterDateStr === today) {
+                // 不应该发生, 因为每日限制
+            } else if(isYesterday(lastWaterDateStr, today)) {
+                totalStreak += 1;
+            } else {
+                // 中断了，重新开始
+                totalStreak = 1;
+            }
+            
+            lastWaterDateStr = today;
+            todayWatered = true;
+            // 存储
+            saveGameData();
+            // 更新界面
+            updateUI();
+            drawPlant();
+            addWaterAnimation();
+        }
+        
+        // 重置游戏 （重生）
+        function resetGame() {
+            if(confirm("🌱 确定要让植物重生吗？所有成长进度将会归零，连续天数也会重置。")) {
+                currentStage = 0;
+                waterProgress = 0;
+                lastWaterDateStr = "";
+                totalStreak = 0;
+                todayWatered = false;
+                saveGameData();
+                updateUI();
+                drawPlant();
+                showMessage("🔄 植物已重生为一颗种子，重新开始陪伴之旅吧！", 2000);
+            }
+        }
+        
+        // 更新UI文字
+        function updateUI() {
+            const stage = STAGES[currentStage];
+            stageNameSpan.innerText = stage.name;
+            waterTodaySpan.innerText = todayWatered ? "1" : "0";
+            dailyLimitDisplaySpan.innerText = "1";
+            streakCountSpan.innerText = totalStreak;
+            
+            // 若最终形态, 提示可以继续水
+            if(currentStage === MAX_STAGE_INDEX) {
+                // 界面不显示成长需求无所谓
+            }
+        }
+        
+        function showMessage(msg, duration=2000) {
+            messageBox.innerHTML = `💬 ${msg}`;
+            setTimeout(() => {
+                if(messageBox.innerHTML.includes(msg)){
+                    messageBox.innerHTML = `🌿 ${STAGES[currentStage].name} | 每天浇水1次，慢慢长大～<br>连续守护: ${totalStreak}天`;
+                }
+            }, duration);
+        }
+        
+        // ---- 像素绘图区 (各种阶段独立绘制 16x16 风格但缩放至画布，我们直接绘制像素块) ----
+        function drawSeedPixel(ctx, w, h) {
+            ctx.fillStyle = "#5d3a1a";
+            ctx.fillRect(w/2-12, h-40, 24, 12);
+            ctx.fillStyle = "#a57c3c";
+            ctx.fillRect(w/2-8, h-44, 16, 8);
+            ctx.fillStyle = "#2f241b";
+            ctx.fillRect(w/2-4, h-48, 8, 8);
+            ctx.fillStyle = "#c99e6f";
+            ctx.beginPath();
+            ctx.arc(w/2, h-52, 7, 0, Math.PI*2);
+            ctx.fill();
+            ctx.fillStyle = "#503e2c";
+            ctx.fillRect(w/2-2, h-55, 4, 6);
+            // 高光
+            ctx.fillStyle = "#f7e05e";
+            ctx.fillRect(w/2-3, h-56, 2, 2);
+            ctx.fillStyle = "#5e823b";
+            ctx.fillRect(w/2-2, h-50, 4, 2);
+        }
+        
+        function drawSproutPixel(ctx, w, h) {
+            ctx.fillStyle = "#6b4c2c";
+            ctx.fillRect(w/2-5, h-48, 10, 18);
+            ctx.fillStyle = "#76b83d";
+            ctx.fillRect(w/2-8, h-58, 6, 14);
+            ctx.fillRect(w/2+2, h-58, 6, 14);
+            ctx.fillStyle = "#b5e65a";
+            ctx.fillRect(w/2-5, h-62, 4, 10);
+            ctx.fillRect(w/2+1, h-62, 4, 10);
+            ctx.fillStyle = "#428021";
+            ctx.fillRect(w/2-3, h-52, 6, 6);
+        }
+        
+        function drawSeedlingPixel(ctx, w, h) {
+            ctx.fillStyle = "#71582e";
+            ctx.fillRect(w/2-5, h-46, 10, 20);
+            ctx.fillStyle = "#47972e";
+            for(let i=-1;i<=1;i++) {
+                ctx.fillRect(w/2-12 + i*6, h-60, 8, 16);
+                ctx.fillRect(w/2+4 + i*6, h-60, 8, 16);
+            }
+            ctx.fillStyle = "#8fda4a";
+            ctx.fillRect(w/2-6, h-68, 12, 14);
+            ctx.fillStyle = "#2b6b17";
+            ctx.fillRect(w/2-2, h-48, 4, 8);
+        }
+        
+        function drawLeafyPixel(ctx, w, h) {
+            ctx.fillStyle = "#5d3d1c";
+            ctx.fillRect(w/2-6, h-44, 12, 20);
+            ctx.fillStyle = "#458a2a";
+            ctx.fillRect(w/2-20, h-58, 16, 20);
+            ctx.fillRect(w/2+4, h-58, 16, 20);
+            ctx.fillRect(w/2-8, h-70, 16, 18);
+            ctx.fillStyle = "#72bc42";
+            ctx.fillRect(w/2-14, h-66, 10, 15);
+            ctx.fillRect(w/2+4, h-66, 10, 15);
+            ctx.fillStyle = "#fee48c";
+            ctx.fillRect(w/2-3, h-74, 6, 6);
+        }
+        
+        function drawBudPixel(ctx, w, h) {
+            drawLeafyPixel(ctx, w, h);
+            ctx.fillStyle = "#dd77aa";
+            ctx.fillRect(w/2-6, h-80, 12, 12);
+            ctx.fillStyle = "#ffb3d9";
+            ctx.fillRect(w/2-4, h-82, 8, 8);
+            ctx.fillStyle = "#ffe27a";
+            ctx.fillRect(w/2-2, h-78, 4, 4);
+        }
+        
+        function drawBloomPixel(ctx, w, h) {
+            drawBudPixel(ctx, w, h);
+            ctx.fillStyle = "#ff66b5";
+            for(let ang=0; ang<4; ang++) {
+                let offX = Math.sin(ang)*12;
+                let offY = -6 + Math.cos(ang*1.5)*8;
+                ctx.fillRect(w/2-4+offX, h-84+offY, 6, 6);
+            }
+            ctx.fillStyle = "#ffd966";
+            ctx.fillRect(w/2-3, h-88, 6, 8);
+            ctx.fillStyle = "#f254ad";
+            ctx.fillRect(w/2, h-92, 4, 6);
+        }
+        
+        function drawPlant() {
+            canvas.width = 220;
+            canvas.height = 220;
+            ctx.clearRect(0,0,220,220);
+            // 背景像素土地
+            ctx.fillStyle = "#7b583c";
+            ctx.fillRect(0, 160, 220, 60);
+            ctx.fillStyle = "#9b754a";
+            for(let i=0;i<12;i++) {
+                ctx.fillRect(10+i*18, 170, 6, 12);
+            }
+            ctx.fillStyle = "#4d6b2f";
+            ctx.fillRect(0, 150, 220, 12);
+            // 调用当前阶段绘图
+            const drawFunc = STAGES[currentStage].draw;
+            if(drawFunc) drawFunc(ctx, 220, 180);
+            else drawSeedPixel(ctx,220,180);
+            
+            // 增加一些像素颗粒感
+            ctx.fillStyle = "#2e3820";
+            for(let i=0;i<30;i++) {
+                ctx.fillRect( (i*13)%220, 192, 2, 2);
+            }
+        }
+        
+        function addWaterAnimation() {
+            const canvasElem = document.getElementById('plantCanvas');
+            canvasElem.classList.add('animate-water');
+            setTimeout(() => {
+                canvasElem.classList.remove('animate-water');
+            }, 300);
+        }
+        
+        // 每天启动时检查跨日重置 (尤其是前一天过了午夜)
+        function checkDateRollover() {
+            const today = getTodayStr();
+            if(lastWaterDateStr !== today) {
+                if(todayWatered === true) {
+                    todayWatered = false;
+                    saveGameData();
+                }
+                // 如果上次浇水日期不是昨天并且不是今天，连续显示暂时不管,浇水时会修正，但是UI显示连续可能需要降为虚假0，
+                if(lastWaterDateStr && !isConsecutive(lastWaterDateStr, today) && lastWaterDateStr !== today) {
+                    // 只是展示不修改存储，为了避免误导，不修改存储，等浇水时变正确，但是显示时优先显示存储的totalStreak 可能会显示错误
+                    // 在更新UI里我们额外做判断：如果连续断了且今天没浇，就在UI显示0但实际存储值保持不变, 下次浇水纠正
+                    const showStreak = (!todayWatered && lastWaterDateStr && !isConsecutive(lastWaterDateStr, today)) ? 0 : totalStreak;
+                    streakCountSpan.innerText = showStreak;
+                } else {
+                    streakCountSpan.innerText = totalStreak;
+                }
+                updateUI();
+                drawPlant();
+            } else {
+                updateUI();
+            }
+        }
+        
+        // 初始化
+        function init() {
+            loadGameData();
+            // 修正跨日问题
+            const today = getTodayStr();
+            if(lastWaterDateStr !== today && todayWatered === true) {
+                todayWatered = false;
+                saveGameData();
+            }
+            if(lastWaterDateStr && !isConsecutive(lastWaterDateStr, today) && lastWaterDateStr !== today && !todayWatered) {
+                // 显示上暂时让streak显示0但存储未重置，浇水时重置
+                // 不用太担心，我们覆盖显示
+            }
+            updateUI();
+            drawPlant();
+            checkDateRollover();
+            
+            waterBtn.addEventListener('click', () => {
+                addWater();
+                saveGameData();
+                updateUI();
+                drawPlant();
+                checkDateRollover();
+            });
+            resetBtn.addEventListener('click', resetGame);
+            // 刷新显示
+            setInterval(() => {
+                const nowDate = getTodayStr();
+                if(nowDate !== lastWaterDateStr && todayWatered === true) {
+                    todayWatered = false;
+                    saveGameData();
+                    updateUI();
+                    drawPlant();
+                    showMessage("🌞 新的一天！植物又可以浇水啦~", 1500);
+                }
+                checkDateRollover();
+                updateUI();
+            }, 60000); // 每分钟检查跨天
+        }
+        
+        init();
+    })();
+</script>
+</body>
+</html>
+```
